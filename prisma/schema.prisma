@@ -1,0 +1,222 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles for role-based access control
+enum Role {
+  OWNER
+  CUSTOMER
+}
+
+// Subscription plan types
+enum PlanType {
+  STANDARD
+  PRO
+  ULTIMATE
+}
+
+// User model - represents application users
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  fullName  String
+  password  String
+  role      Role     @default(OWNER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  domains   Domain[]
+  billings  Billing[]
+  chatRooms ChatRoom[]
+
+  @@map("users")
+}
+
+// Domain model - defines properties for domains that can host chatbots
+model Domain {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  image       String?  // URL to domain logo/image
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  chatBots    ChatBot[]
+  chatRooms   ChatRoom[]
+  customers   Customer[]
+
+  @@map("domains")
+}
+
+// ChatBot model - stores configurations for AI chatbots
+model ChatBot {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  config      Json?    // Store chatbot configuration as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key relationships
+  domainId    String
+  domain      Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  filteredQuestions FilteredQuestion[]
+
+  @@map("chatbots")
+}
+
+// Billing model - handles billing-related information
+model Billing {
+  id          String   @id @default(cuid())
+  amount      Float
+  currency    String   @default("USD")
+  status      String   // pending, paid, failed, etc.
+  stripeId    String?  // Stripe payment intent ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId      String
+  plan        Plan     @relation(fields: [planId], references: [id])
+
+  @@map("billings")
+}
+
+// Plan model - defines subscription plans
+model Plan {
+  id          String   @id @default(cuid())
+  name        PlanType
+  price       Float
+  currency    String   @default("USD")
+  interval    String   // monthly, yearly
+  features    Json     // Store plan features as JSON
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  billings    Billing[]
+
+  @@map("plans")
+}
+
+// HelpDesk model - used for frequently asked questions (FAQ)
+model HelpDesk {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("helpdesk")
+}
+
+// FilteredQuestion model - stores specific questions for AI chatbot training
+model FilteredQuestion {
+  id        String   @id @default(cuid())
+  question  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign key relationships
+  chatBotId String
+  chatBot   ChatBot  @relation(fields: [chatBotId], references: [id], onDelete: Cascade)
+
+  @@map("filtered_questions")
+}
+
+// Customer model - stores customer information
+model Customer {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign key relationships
+  domainId  String
+  domain    Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  chatRooms ChatRoom[]
+  responses CustomerResponse[]
+
+  @@map("customers")
+}
+
+// CustomerResponse model - captures text-based responses from customers
+model CustomerResponse {
+  id        String   @id @default(cuid())
+  response  String
+  createdAt DateTime @default(now())
+
+  // Foreign key relationships
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_responses")
+}
+
+// ChatRoom model - establishes two-way connection for real-time chat
+model ChatRoom {
+  id        String   @id @default(cuid())
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign key relationships
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  domainId   String
+  domain     Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  messages   ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+// ChatMessage model - represents individual chat bubbles within a conversation
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String
+  image     String?  // URL to image if message contains one
+  isFromBot Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Foreign key relationships
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
