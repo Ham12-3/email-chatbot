@@ -1,4 +1,4 @@
-
+'use client'
 import React , {Children, useState} from 'react'
 
 type InitialValuesProps = {

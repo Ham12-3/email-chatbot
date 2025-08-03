@@ -1,3 +1,5 @@
+
+'use client'
 import { AuthContextProvider } from '@/context/use-auth-context'
 import React from 'react'
 import { FormProvider } from 'react-hook-form'
