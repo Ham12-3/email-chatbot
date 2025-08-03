@@ -1,13 +1,27 @@
-'use client'
-	
-import React from 'react'
+"use client";
 
-type Props = {}
+import React from "react";
+import { FieldValues, UseFormRegister } from "react-hook-form";
 
-const UserTypeCard = (props: Props) => {
-  return (
-    <div>UserTypeCard</div>
-  )
-}
+type Props = {
+  value: string;
+  title: string;
+  text: string;
+  register: UseFormRegister<FieldValues>;
 
-export default UserTypeCard
+  userType: "owner" | "student";
+  setUserType: React.Dispatch<React.SetStateAction<"owner" | "student">>;
+};
+
+const UserTypeCard = ({
+  register,
+  value,
+  title,
+  text,
+  userType,
+  setUserType,
+}: Props) => {
+  return <div>UserTypeCard</div>;
+};
+
+export default UserTypeCard;
