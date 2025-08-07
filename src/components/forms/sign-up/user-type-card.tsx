@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
@@ -46,6 +47,35 @@ className={cn(
 )}
 />
 </Card>
+<div className="">
+  <CardDescription className="text-iridium">
+{title}
+  </CardDescription>
+  <CardDescription className="text-gray-400">
+{text}
+  </CardDescription>
+
+</div>
+    </div>
+    <div>
+      <div className={cn(
+        'w-4 h-4 rounded-full',
+        userType == value ? 'bg-orange' : 'bg-platinum'
+      )}>
+
+<Input 
+{
+  ...register('type', {
+    onChange: (event) => setUserType(event.target.value)
+  })
+}
+value={value}
+id={value}
+className="hidden"
+type="radio"
+/>
+
+      </div>
     </div>
 
 </CardContent>
