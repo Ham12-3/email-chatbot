@@ -24,7 +24,7 @@ const TypeSelectionForm = ({register,userType,setUserType}: Props) => {
  value='owner'
  title='I own a business'
  text = "Setting up my account for my company"
- ></UserTypeCard>
+ />
  </>
   )
 }

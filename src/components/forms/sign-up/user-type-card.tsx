@@ -60,7 +60,7 @@ className={cn(
     <div>
       <div className={cn(
         'w-4 h-4 rounded-full',
-        userType == value ? 'bg-orange' : 'bg-platinum'
+        userType == value ? 'bg-orange' : 'bg-transparent'
       )}>
 
 <Input 
