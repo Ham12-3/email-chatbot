@@ -4,6 +4,8 @@ import {
   userRegistrationSchema,
   UserRegistrationFormData 
 } from "@/schemas/auth.schema"
+import { onCompleteUserRegistration } from "@/actions/auth"
+import { useAuthContextHook } from "@/context/use-auth-context"
 import { useSignUp } from "@clerk/nextjs"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
@@ -14,6 +16,7 @@ export const useSignUpForm = () => {
   const { toast } = useToast()
   const [loading, setLoading] = useState<boolean>(false)
   const { signUp, isLoaded, setActive } = useSignUp()
+  const { setCurrentStep } = useAuthContextHook()
   const router = useRouter()
 
   // Initialize form with Zod resolver and validation
@@ -47,27 +50,45 @@ export const useSignUpForm = () => {
       })
 
       if (result.status === "complete") {
-        // Sign-up successful
+        // Sign-up successful, set session first
         await setActive({ session: result.createdSessionId })
         
-        toast({
-          title: "Success!",
-          description: "Your account has been created successfully.",
-          variant: "default",
-        })
+        // Create user in database
+        const dbResult = await onCompleteUserRegistration(
+          data.fullName,
+          result.createdUserId!,
+          data.type,
+          data.email
+        )
 
-        // Redirect to dashboard or onboarding
-        router.push("/dashboard")
+        if (dbResult.status === 200) {
+          toast({
+            title: "Success!",
+            description: "Your account has been created successfully.",
+            variant: "default",
+          })
+          router.push("/dashboard")
+        } else {
+          toast({
+            title: "Database Error",
+            description: dbResult.message || "Failed to complete registration.",
+            variant: "destructive",
+          })
+        }
       } else if (result.status === "missing_requirements") {
-        // Handle OTP verification
-        if (result.verifications.emailAddress?.status === "missing_requirements") {
-          // Show OTP input form or redirect to verification page
+        // Handle email verification requirement
+        if (result.verifications.emailAddress?.status === "unverified") {
+          // Prepare email verification
+          await result.prepareEmailAddressVerification({ strategy: "email_code" })
+          
           toast({
             title: "Verification Required",
             description: "Please check your email for the verification code.",
             variant: "default",
           })
-          router.push("/verify-email")
+          
+          // Move to step 3 (verification) instead of redirecting
+          setCurrentStep(3)
         }
       }
     } catch (error: unknown) {

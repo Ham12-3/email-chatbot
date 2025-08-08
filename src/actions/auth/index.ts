@@ -60,14 +60,15 @@ interface AuthResponse {
 export const onCompleteUserRegistration = async (
   fullName: string,
   clerkId: string,
-  type: string
+  type: string,
+  email: string
 ): Promise<AuthResponse> => {
   try {
     // Validate input parameters
-    if (!fullName || !clerkId || !type) {
+    if (!fullName || !clerkId || !type || !email) {
       return {
         status: 400,
-        message: "Missing required parameters: fullName, clerkId, or type"
+        message: "Missing required parameters: fullName, clerkId, type, or email"
       }
     }
 
@@ -91,11 +92,8 @@ export const onCompleteUserRegistration = async (
         fullName: fullName,
         clerkId: clerkId,
         type: type,
-        email: "", // Will be updated from Clerk data
-        role: type === "owner" ? "OWNER" : "CUSTOMER",
-        // Initialize with default values
-        createdAt: new Date(),
-        updatedAt: new Date()
+        email: email,
+        role: type === "owner" ? "OWNER" : "CUSTOMER"
       }
     })
 

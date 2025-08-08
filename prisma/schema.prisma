@@ -10,7 +10,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -30,9 +30,10 @@ enum PlanType {
 // User model - represents application users
 model User {
   id        String   @id @default(cuid())
+  clerkId   String   @unique  // Clerk user ID for authentication
   email     String   @unique
   fullName  String
-  password  String
+  type      String   // user type: owner, customer, etc.
   role      Role     @default(OWNER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
